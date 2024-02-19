@@ -3,6 +3,10 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from keypad import Keypad
 from calculator_display import HistoryDisplay, Display
+import os
+
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = '1'
+from pygame import mixer
 
 
 class Calculator(tk.Tk):
@@ -28,6 +32,10 @@ class Calculator(tk.Tk):
     def init_components(self):
         """Init all the component in the Calculator"""
         options = {'expand': True, 'fill': tk.BOTH}
+
+        mixer.init()
+        sound_path = os.path.join(os.path.dirname(__file__), 'error_sound.wav')
+        mixer.music.load(sound_path)
 
         self.format_frame = tk.Frame(self)
         format_box = ttk.Combobox(self.format_frame, textvariable=self.format, state='readonly')
@@ -141,7 +149,7 @@ class Calculator(tk.Tk):
         self.display.set_display(self.model.get_display())
 
     def calculate(self):
-        """Calculate the expression in the current display and replace it with the result."""
+        """Calculate the expression in the current display and replace the display with the result."""
         try:
             self.digit_handler()
             self.model.evaluate_output()
@@ -150,8 +158,10 @@ class Calculator(tk.Tk):
             self.add_history()
         except SyntaxError:
             self.display.show_error()
+            mixer.music.play()
         except TypeError:
             self.display.show_error()
+            mixer.music.play()
         except OverflowError:
             messagebox.showerror('ERROR', 'result too large')
             self.clear_button_handler()
@@ -160,7 +170,7 @@ class Calculator(tk.Tk):
             self.clear_button_handler()
 
     def add_history(self):
-        """Add the history to the combobox for selecting in the combobox and displaying on the scrolled text"""
+        """Add the history for selecting in the combobox and displaying on the scrolled text"""
         self.history_box['values'] = (self.model.history[0],) + self.history_box['values']
         self.history_box.set('Select History')
         self.history.set_history(self.model.get_all_history())
